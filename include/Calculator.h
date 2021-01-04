@@ -7,6 +7,7 @@ struct expTreeNode
 {
     inputType content;
     int16_t Num;
+    expTreeNode* pParentNode = nullptr;
     expTreeNode* pLeftNode = nullptr;
     expTreeNode* pRightNode = nullptr;
 };
@@ -16,12 +17,14 @@ class Calculator
 private:
     expTreeNode* expHead = nullptr;
     expTreeNode* lastNodeAdded = nullptr;
-    expTreeNode* lastAddedParent = nullptr;
+    expTreeNode* lastOperationNode = nullptr;
 
     bool bExpValidState = false;
+    bool bLastOperationIsMultiply = false;
 
     void resetTree(expTreeNode* node);
     int16_t EvaluteTree(expTreeNode* node);
+    void InsertNodeAtTree(expTreeNode* &pNode, expTreeNode* &pTree);
 
 public:
     Calculator() {}

@@ -10,7 +10,9 @@ void Calculator::Reset()
     resetTree(expHead);
     expHead = nullptr;
     lastNodeAdded = nullptr;
-    lastAddedParent = nullptr;
+    lastOperationNode = nullptr;
+    bExpValidState = false;
+    bLastOperationIsMultiply = false;
 }
 
 bool Calculator::processNewInput(inputType inType, int16_t digit)
@@ -44,24 +46,30 @@ bool Calculator::processNewInput(inputType inType, int16_t digit)
             //In this case, always add the new node to the left of the last added.
             //The last added must be an operation node.
             lastNodeAdded->pRightNode = pNode;
-            lastAddedParent = lastNodeAdded;
+            pNode->pParentNode = lastNodeAdded;
             break;
         
         case inputType::multiply:
         case inputType::divide:
-            pNode->pLeftNode = lastNodeAdded;
-            if(expHead==lastNodeAdded)  
-                expHead = pNode;    // Will reach here only if the * or / are the first operator in the expression
+            if (bLastOperationIsMultiply)
+                if(lastOperationNode==expHead)
+                    InsertNodeAtTree(pNode, expHead);
+                else
+                    InsertNodeAtTree(pNode, lastOperationNode);
             else
-                lastAddedParent->pRightNode = pNode; // Parent of last added not changed in this case, same parent.
-                // The above is the only line why we need the propert "lastAddedParent"
+                if (lastNodeAdded == expHead)
+                    InsertNodeAtTree(pNode, expHead);
+                else
+                    InsertNodeAtTree(pNode, lastNodeAdded);
+            lastOperationNode = pNode;
+            bLastOperationIsMultiply = true;
             break;
 
         case inputType::add:
         case inputType::subtract:
-            pNode->pLeftNode = expHead;
-            expHead = pNode;
-            lastAddedParent = nullptr;
+            InsertNodeAtTree(pNode, expHead);
+            lastOperationNode = pNode;
+            bLastOperationIsMultiply = false;
             break;
             
         default:
@@ -124,3 +132,21 @@ int16_t Calculator::EvaluteTree(expTreeNode* pNode)
     }
 }
 
+void Calculator::InsertNodeAtTree(expTreeNode* &pNode, expTreeNode* &pTree)
+{
+    if (pTree == nullptr || pNode == nullptr)  /// very strange
+        return;
+
+    if(pTree->pParentNode!=nullptr)
+    {
+        if(pTree->pParentNode->pLeftNode==pTree)
+            pTree->pParentNode->pLeftNode=pNode;
+        else
+            pTree->pParentNode->pRightNode=pNode;
+    }
+
+    pNode->pParentNode = pTree->pParentNode;
+    pNode->pLeftNode = pTree;
+    pTree->pParentNode = pNode;
+    pTree = pNode;
+}
